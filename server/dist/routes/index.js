@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const auth_route_1 = __importDefault(require("../modules/auth/auth.route"));
+const chartOfAccounts_route_1 = __importDefault(require("../modules/chartOfAccounts/chartOfAccounts.route"));
+const journalsName_route_1 = __importDefault(require("../modules/journalsName/journalsName.route"));
+const journals_route_1 = __importDefault(require("../modules/journals/journals.route"));
+const contacts_route_1 = __importDefault(require("../modules/contacts/contacts.route"));
+const categories_route_1 = __importDefault(require("../modules/categories/categories.route"));
+const invoice_route_1 = __importDefault(require("../modules/invoices/invoice.route"));
+const transaction_route_1 = __importDefault(require("../modules/transactions/transaction.route"));
+const dash_route_1 = __importDefault(require("../modules/dashboard/dash.route"));
+const router = express_1.default.Router();
+router.use('/auth', auth_route_1.default);
+router.use('/chart', chartOfAccounts_route_1.default);
+router.use('/journalsName', journalsName_route_1.default);
+router.use('/journals', journals_route_1.default);
+router.use('/contacts', contacts_route_1.default);
+router.use('/categories', categories_route_1.default);
+router.use('/invoices', invoice_route_1.default);
+router.use('/transactions', transaction_route_1.default);
+router.use('/dashboard', dash_route_1.default);
+exports.default = router;

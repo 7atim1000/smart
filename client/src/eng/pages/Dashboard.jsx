@@ -1,0 +1,408 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import { AuthContext } from '../../../context/AuthContext';
+import { 
+  FaBox, 
+  FaUsers, 
+  FaUserTie, 
+  FaFileInvoice, 
+  FaShoppingCart,
+  FaArrowLeft,
+  FaArrowRight,
+  FaEye,
+  FaPrint,
+  FaDownload,
+  FaDollarSign,
+  FaCalendarAlt,
+  FaChartLine,
+  FaPlusCircle
+} from 'react-icons/fa';
+import { MdOutlineProductionQuantityLimits } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+
+const Dashboard = () => {
+  const { axios } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalCustomers: 0,
+    totalSuppliers: 0,
+    totalSaleInvoices: 0,
+    totalPurchaseInvoices: 0,
+    recentSaleInvoices: [],
+    recentPurchaseInvoices: []
+  });
+
+  // Fetch dashboard statistics
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('/v1/api/dashboard/stats');
+      
+      if (response.data.success) {
+        setStats(response.data.data);
+      } else {
+        toast.error('Failed to load dashboard statistics');
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      toast.error('Error loading dashboard statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // Format currency
+  const formatCurrency = (amount, currency = 'AED') => {
+    return `${amount?.toFixed(2) || '0.00'} ${currency}`;
+  };
+
+  // Navigate to invoice details
+  const navigateToInvoice = (invoiceId, type) => {
+    if (type === 'sale') {
+      navigate(`/en/invdetails/${invoiceId}`);
+    } else {
+      navigate(`/en/purchase-invoice/${invoiceId}`);
+    }
+  };
+
+  // Statistics cards data
+  const statCards = [
+    {
+      title: 'Total Products',
+      value: stats.totalProducts,
+      icon: <MdOutlineProductionQuantityLimits className="w-8 h-8" />,
+      color: 'from-blue-500 to-blue-600',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-600'
+    },
+    {
+      title: 'Total Customers',
+      value: stats.totalCustomers,
+      icon: <FaUsers className="w-8 h-8" />,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-600'
+    },
+    {
+      title: 'Total Suppliers',
+      value: stats.totalSuppliers,
+      icon: <FaUserTie className="w-8 h-8" />,
+      color: 'from-purple-500 to-purple-600',
+      bgColor: 'bg-purple-100',
+      textColor: 'text-purple-600'
+    },
+    {
+      title: 'Sale Invoices',
+      value: stats.totalSaleInvoices,
+      icon: <FaFileInvoice className="w-8 h-8" />,
+      color: 'from-emerald-500 to-emerald-600',
+      bgColor: 'bg-emerald-100',
+      textColor: 'text-emerald-600'
+    },
+    {
+      title: 'Purchase Invoices',
+      value: stats.totalPurchaseInvoices,
+      icon: <FaShoppingCart className="w-8 h-8" />,
+      color: 'from-amber-500 to-amber-600',
+      bgColor: 'bg-amber-100',
+      textColor: 'text-amber-600'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6" dir="ltr">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <FaChartLine className="text-blue-600" />
+            Dashboard
+          </h1>
+          <p className="text-gray-600 mt-2">Welcome to your invoice management system dashboard</p>
+        </div>
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-gray-600 text-lg">Loading dashboard statistics...</p>
+          </div>
+        ) : (
+          <>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+              {statCards.map((card, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`bg-gradient-to-r ${card.color} rounded-2xl shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-300`}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-white/20 p-3 rounded-xl">
+                      {card.icon}
+                    </div>
+                    <span className="text-3xl font-bold">{card.value}</span>
+                  </div>
+                  <h3 className="text-lg font-semibold">{card.title}</h3>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Recent Invoices Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Sale Invoices */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200"
+              >
+                <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4">
+                  <h2 className="text-white text-xl font-bold flex items-center gap-2">
+                    <FaFileInvoice className="text-white" />
+                    Recent Sale Invoices
+                  </h2>
+                </div>
+                
+                <div className="p-6">
+                  {stats.recentSaleInvoices.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No sale invoices to display
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {stats.recentSaleInvoices.map((invoice, index) => (
+                        <div
+                          key={invoice._id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => navigateToInvoice(invoice._id, 'sale')}
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="font-semibold text-gray-800">
+                                {invoice.invoiceNumber}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                <FaCalendarAlt className="w-3 h-3" />
+                                <span>{formatDate(invoice.createdAt)}</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-lg font-bold text-emerald-600">
+                                {formatCurrency(invoice.bills?.totalWithTax, invoice.bills?.currency)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <FaUsers className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">
+                                {invoice.customer?.name || 'Unknown Customer'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToInvoice(invoice._id, 'sale');
+                              }}
+                              className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-sm"
+                            >
+                              <FaEye className="w-4 h-4" />
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {stats.totalSaleInvoices > 5 && (
+                    <button
+                      onClick={() => navigate('/en/invoices')}
+                      className="mt-4 w-full py-2 text-center text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center justify-center gap-2"
+                    >
+                      View All Invoices
+                      <FaArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Recent Purchase Invoices */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200"
+              >
+                <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4">
+                  <h2 className="text-white text-xl font-bold flex items-center gap-2">
+                    <FaShoppingCart className="text-white" />
+                    Recent Purchase Invoices
+                  </h2>
+                </div>
+                
+                <div className="p-6">
+                  {stats.recentPurchaseInvoices.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No purchase invoices to display
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {stats.recentPurchaseInvoices.map((invoice, index) => (
+                        <div
+                          key={invoice._id}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => navigateToInvoice(invoice._id, 'purchase')}
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <span className="font-semibold text-gray-800">
+                                {invoice.invoiceNumber}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                <FaCalendarAlt className="w-3 h-3" />
+                                <span>{formatDate(invoice.createdAt)}</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-lg font-bold text-amber-600">
+                                {formatCurrency(invoice.bills?.totalWithTax, invoice.bills?.currency)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <FaUserTie className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">
+                                {invoice.supplier?.name || 'Unknown Supplier'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToInvoice(invoice._id, 'purchase');
+                              }}
+                              className="flex items-center gap-1 text-amber-600 hover:text-amber-700 text-sm"
+                            >
+                              <FaEye className="w-4 h-4" />
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {stats.totalPurchaseInvoices > 5 && (
+                    <button
+                      onClick={() => navigate('/en/purchases')}
+                      className="mt-4 w-full py-2 text-center text-amber-600 hover:text-amber-700 font-medium text-sm flex items-center justify-center gap-2"
+                    >
+                      View All Purchase Invoices
+                      <FaArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 bg-white rounded-2xl shadow-xl p-6 border border-gray-200"
+            >
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button
+                  onClick={() => navigate('/en/sales')}
+                  className="flex flex-col items-center gap-2 p-4 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition-colors group"
+                >
+                  <FaFileInvoice className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-emerald-700">New Sale Invoice</span>
+                </button>
+                <button
+                  onClick={() => navigate('/en/purchases')}
+                  className="flex flex-col items-center gap-2 p-4 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors group"
+                >
+                  <FaShoppingCart className="w-6 h-6 text-amber-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-amber-700">New Purchase Invoice</span>
+                </button>
+                <button
+                  onClick={() => navigate('/en/contacts')}
+                  className="flex flex-col items-center gap-2 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group"
+                >
+                  <FaUsers className="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-blue-700">Manage Contacts</span>
+                </button>
+                <button
+                  onClick={() => navigate('/en/categories')}
+                  className="flex flex-col items-center gap-2 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors group"
+                >
+                  <FaBox className="w-6 h-6 text-purple-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-purple-700">Manage Products</span>
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Additional Info - Total Revenue Summary */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-2xl p-6 border border-emerald-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <FaDollarSign className="w-6 h-6 text-emerald-600" />
+                  <h3 className="text-lg font-semibold text-emerald-800">Sales Summary</h3>
+                </div>
+                <p className="text-3xl font-bold text-emerald-700">
+                  {stats.recentSaleInvoices.reduce((sum, inv) => sum + (inv.bills?.totalWithTax || 0), 0).toFixed(2)} AED
+                </p>
+                <p className="text-sm text-emerald-600 mt-2">Last 5 invoices total amount</p>
+              </div>
+              
+              <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl p-6 border border-amber-200">
+                <div className="flex items-center gap-3 mb-3">
+                  <FaDollarSign className="w-6 h-6 text-amber-600" />
+                  <h3 className="text-lg font-semibold text-amber-800">Purchases Summary</h3>
+                </div>
+                <p className="text-3xl font-bold text-amber-700">
+                  {stats.recentPurchaseInvoices.reduce((sum, inv) => sum + (inv.bills?.totalWithTax || 0), 0).toFixed(2)} AED
+                </p>
+                <p className="text-sm text-amber-600 mt-2">Last 5 invoices total amount</p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
