@@ -38,7 +38,7 @@ import ArbInvoices from './arb/pages/Invoices' ;
 import ArbSales from './arb/pages/Sales' ;
 import ArbPurchase from './arb/pages/Purchase';
 import ArbInvDetails from './arb/pages/InvDetails' ;
-import BalanceSheet from './eng/pages/Balancesheet';
+import BalanceSheet from './eng/pages/BalanceSheet';
 import ArbTrialBalance from './arb/pages/TrialBalance';
 import ArbBalanceSheet from './arb/pages/BalanceSheet';
 
